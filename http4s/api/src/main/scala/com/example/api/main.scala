@@ -1,4 +1,4 @@
-import StudentDao.StudentService
+import StudentController.StudentService
 import cats.effect.{ExitCode, IO, IOApp}
 import org.http4s.server.Router
 import org.http4s.implicits._
@@ -10,10 +10,10 @@ import scala.concurrent.ExecutionContext.global
 
 object Main extends IOApp {
 
-  private val StudentDao : StudentDao = new StudentService
+  private val StudentController : StudentController = new StudentService
 
   val httpRoutes = Router[IO](
-    "/" -> StudentRoutes.routes(StudentDao)
+    "/" -> StudentRoutes.routes(StudentController)
   ).orNotFound
 
 

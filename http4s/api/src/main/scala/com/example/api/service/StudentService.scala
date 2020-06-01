@@ -1,30 +1,39 @@
 import cats.effect.IO
 import scala.collection.mutable.HashMap
 
-trait StudentDao{
+trait StudentController{
 
-  def addStudent(book: Student): IO[StudentId]
+  def addStudent(student: Student): IO[StudentId]
   def getStudent(id: StudentId): IO[Option[StudentWithId]]
+  def updateStudent(id: StudentId, student: Student): IO[Either[String, Student]]
   def deleteStudent(id: StudentId): IO[Either[String, Student]]
 
 }
-object StudentDao{
+object StudentController{
 
-  class StudentService extends StudentDao{
+  class StudentService extends StudentController {
 
     //storing in memory itself instead of database
     val storage = HashMap[StudentId, Student]().empty
 
-    override def addStudent(book: Student): IO[StudentId] = IO{
-      val bookId = StudentId()
-      storage.put(bookId, book)
-      bookId
+    override def addStudent(student: Student): IO[StudentId] = IO{
+      val studentId = StudentId()
+      storage.put(studentId, student)
+      studentId
     }
 
     override def getStudent(id: StudentId): IO[Option[StudentWithId]] = IO{
-      storage.get(id).map(book => StudentWithId(id.value, book.studentName,book.studentSurname))
+      storage.get(id).map(student => StudentWithId(id.value, student.studentName,student.studentSurname))
     }
 
+    override def updateStudent(id: StudentId, student: Student): IO[Either[String, Student]] = {
+      for {
+        bookOpt <- getStudent(id)
+        _ <- IO(bookOpt.toRight(s"Book with ${id.value} not founddddd"))
+        updatedBook = storage.put(id, student)
+          .toRight(s"Book with ${id.value} not found")
+      } yield updatedBook
+    }
     override def deleteStudent(id: StudentId): IO[Either[String, Student]] =
       for {
         removedStudent <- IO(storage.remove(id))

@@ -10,28 +10,36 @@ object StudentRoutes{
     ("message", Json.fromString(message))
   )
 
-  def routes(bookRepo: StudentDao): HttpRoutes[IO] = {
+  def routes(studentRepo: StudentController): HttpRoutes[IO] = {
 
     val dsl = new Http4sDsl[IO]{}
     import dsl._
 
     HttpRoutes.of[IO] {
-      case req @ POST -> Root / "books" =>
+      case req @ POST -> Root / "student" =>
         print(req.body)
-        req.decode[Student] { book =>
-          bookRepo.addStudent(book) flatMap(id =>
+        req.decode[Student] { student =>
+          studentRepo.addStudent(student) flatMap(id =>
             Created(Json.obj(("id", Json.fromString(id.value))))
             )
         }
 
-      case _ @ GET -> Root / "books" / id =>
-        bookRepo.getStudent(StudentId(id)) flatMap {
+      case _ @ GET -> Root / "student" / id =>
+        studentRepo.getStudent(StudentId(id)) flatMap {
           case None => NotFound()
-          case Some(book) => Ok(book)
+          case Some(student) => Ok(student)
         }
 
-      case _ @ DELETE -> Root / "books" / id =>
-        bookRepo.deleteStudent(StudentId(id)) flatMap {
+      case req @ PUT -> Root / "student" / id =>
+        req.decode[Student] { student =>
+          println("hiiiii",StudentId(id))
+          studentRepo.updateStudent(StudentId(id), student) flatMap {
+            case Left(message) => NotFound(errorBody(message))
+            case Right(_) => Ok()
+          }
+        }
+      case _ @ DELETE -> Root / "student" / id =>
+        studentRepo.deleteStudent(StudentId(id)) flatMap {
           case Left(message) => NotFound(errorBody(message))
           case Right(_) => Ok()
         }
